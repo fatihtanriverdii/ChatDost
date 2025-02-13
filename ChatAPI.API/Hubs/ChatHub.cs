@@ -29,7 +29,7 @@ namespace ChatAPI.API.Hubs
 					int parsedUserId = int.Parse(userId);
 					_userConnections[parsedUserId] = connectionId;
 
-					var userRooms = await _chatService.GetChatRooms(parsedUserId);
+					var userRooms = await _chatService.GetChatRoomsAsync(parsedUserId, Context.ConnectionAborted);
 					foreach (var room in userRooms)
 					{
 						await Groups.AddToGroupAsync(Context.ConnectionId, Convert.ToString(room.Id));

@@ -19,7 +19,7 @@ namespace ChatAPI.Data.Repositories
 			_context = context;
 		}
 
-		public async Task AddUser(User user)
+		public async Task AddUserAsync(User user)
 		{
 			try
 			{
@@ -32,19 +32,20 @@ namespace ChatAPI.Data.Repositories
 			}
 		}
 
-		public async Task<List<User>> GetAllUser()
+		public async Task<List<User>> GetAllUsersAsync(CancellationToken cancellationToken)
 		{
 			try
 			{
-				return await _context.Users.ToListAsync();
+				return await _context.Users
+					.ToListAsync(cancellationToken);
 			} 
-			catch (Exception ex) 
+			catch (OperationCanceledException) 
 			{
-				throw new Exception("An error while getting users: ", ex);
+				return new List<User>();
 			}
 		}
 
-		public async Task<User?> GetUserById(int id)
+		public async Task<User?> GetUserByIdAsync(int id)
 		{
 			try
 			{
@@ -56,7 +57,7 @@ namespace ChatAPI.Data.Repositories
 			}
 		}
 
-		public async Task UpdateUser(User user)
+		public async Task UpdateUserAsync(User user)
 		{
 			try
 			{

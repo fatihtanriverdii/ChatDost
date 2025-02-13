@@ -24,35 +24,36 @@ namespace ChatAPI.Service.Services
 			_chatHubService = chatHubService;
 		}
 
-		public async Task<int> CreateChatRoom(string roomName, string connectionId, int userId)
+		public async Task<int> CreateChatRoomAsync(string roomName, string connectionId, int userId)
 		{
-			var roomId = await _chatRepository.CreateChatRoom(roomName, userId);
+			var roomId = await _chatRepository.CreateChatRoomAsync(roomName, userId);
 			await _chatHubService.JoinRoom(connectionId, Convert.ToString(roomId));
 			return roomId;
 		}
-		public async Task<bool> JoinRoom(int userId, string connectionId, string roomCode)
+		public async Task<bool> JoinRoomAsync(int userId, string connectionId, string roomCode)
 		{
-			var roomId = await _chatRepository.JoinRoomAsync(userId, roomCode);
-			if (roomId == 0)
+			var response = await _chatRepository.JoinRoomAsync(userId, roomCode);
+			if (response.IsSuccess)
 			{
-				return false;
+				await _chatHubService.JoinRoom(connectionId, Convert.ToString(response.RoomId));
+				return true;
 			}
 			else
 			{
-				await _chatHubService.JoinRoom(connectionId, Convert.ToString(roomId));
-				return true;
+				Console.WriteLine($"Error: {response.ErrorMessage}");
+				return false;
 			}
 		}
 
-		public async Task<List<ChatRoomDto>> GetChatRooms(int userId)
+		public async Task<List<ChatRoomDto>> GetChatRoomsAsync(int userId, CancellationToken cancellationToken)
 		{
-			var rooms = await _chatRepository.GetChatRooms(userId);
+			var rooms = await _chatRepository.GetChatRoomsAsync(userId, cancellationToken);
 			return _mapper.Map<List<ChatRoomDto>>(rooms);
 		}
 
-		public List<Message> GetMessages(int chatRoomId)
+		public async Task<List<Message>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken)
 		{
-			return _chatRepository.GetMessages(chatRoomId);
+			return await _chatRepository.GetMessagesAsync(chatRoomId, cancellationToken);
 		}
 
 		public async Task<Message> SendMessageAsync(int senderId, SendMessageDto messageDto)

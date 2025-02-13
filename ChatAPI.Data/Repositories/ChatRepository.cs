@@ -1,4 +1,5 @@
-﻿using ChatAPI.Core.Interfaces;
+﻿using ChatAPI.Core.DTOs;
+using ChatAPI.Core.Interfaces;
 using ChatAPI.Core.Models;
 using ChatAPI.Data.Context;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ namespace ChatAPI.Data.Repositories
 		{
 			_context = context;
 		}
-		public async Task<int> CreateChatRoom(string roomName, int userId)
+		public async Task<int> CreateChatRoomAsync(string roomName, int userId)
 		{
 			var chatRoom = new ChatRoom
 			{
@@ -39,11 +40,15 @@ namespace ChatAPI.Data.Repositories
 			return chatRoom.Id;
 		}
 
-		public async Task<int> JoinRoomAsync(int userId, string roomCode)
+		public async Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode)
 		{
 			var chatRoom = await _context.ChatRooms.FirstOrDefaultAsync(c => c.Code == roomCode);
 			if (chatRoom == null)
-				return 0;
+				return new JoinRoomResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = "Chatroom is not exist or invalid room code"
+				};
 
 			var userInRoom = await _context.UserChatRooms
 				.AnyAsync(ur => ur.UserId == userId && ur.ChatRoomId == chatRoom.Id);
@@ -53,35 +58,41 @@ namespace ChatAPI.Data.Repositories
 				var userChatRoom = new UserChatRoom { UserId = userId, ChatRoomId = chatRoom.Id };
 				_context.UserChatRooms.Add(userChatRoom);
 				await _context.SaveChangesAsync();
+				return new JoinRoomResponseDto
+				{
+					IsSuccess = true,
+					RoomId = chatRoom.Id,
+				};
 			}
-
-			return chatRoom.Id;
+			else
+			{
+				return new JoinRoomResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = "The user already in the room"
+				};
+			}
 		}
 
-		public ChatRoom? GetChatRoomById(int chatRoomId)
+		public async Task<ChatRoom?> GetChatRoomByIdAsync(int chatRoomId)
 		{
-			return _context.ChatRooms.FirstOrDefault(c => c.Id == chatRoomId);
+			return await _context.ChatRooms.FirstOrDefaultAsync(c => c.Id == chatRoomId);
 		}
 
-		public async Task<List<ChatRoom>> GetChatRooms(int userId)
+		public async Task<List<ChatRoom>> GetChatRoomsAsync(int userId, CancellationToken cancellationToken)
 		{
 			return await _context.ChatRooms
 			.Where(r => r.Users.Any(u => u.UserId == userId))
 			.Include(r => r.Users)
-			.ToListAsync();
-
-			/*return await _context.UserChatRooms
-				.Where(c => c.UserId == userId)
-				.Select(c =>c.ChatRoom)
-				.ToListAsync();*/
+			.ToListAsync(cancellationToken);
 		}
 
-		public List<Message> GetMessages(int chatRoomId)
+		public async Task<List<Message>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken)
 		{
-			return _context.Messages
+			return await _context.Messages
 				.Where(m => m.ChatRoomId == chatRoomId)
 				.OrderBy(m => m.SentAt)
-				.ToList();
+				.ToListAsync(cancellationToken);
 		}
 
 		public async Task<Message> AddMessageAsync(Message message)

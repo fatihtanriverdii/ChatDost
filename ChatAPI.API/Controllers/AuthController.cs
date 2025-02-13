@@ -17,37 +17,35 @@ namespace ChatAPI.API.Controllers
 		}
 
 		[HttpPost("register")]
-		public IActionResult Register([FromBody] RegisterDto registerDto)
+		public async Task<IActionResult> Register([FromBody] RegisterDto registerDto, CancellationToken cancellationToken)
 		{
-			var token = _authService.Register(registerDto);
-			if (token == null)
-				return BadRequest("User already exist!");
-
-			return Ok(new { Token = token });
+			var authResponse = await _authService.Register(registerDto, cancellationToken);
+			if (authResponse.IsSuccess)
+				return Ok(authResponse);
+			return BadRequest(authResponse);
 		}
 
 		[HttpPost("login")]
-		public IActionResult Login([FromBody] LoginDto loginDto)
+		public async Task<IActionResult> Login([FromBody] LoginDto loginDto, CancellationToken cancellationToken)
 		{
-			var token = _authService.Login(loginDto);
-			if (token == null)
-				return Unauthorized("Invalid credentials");
-
-			return Ok(new { Token = token });
+			var authResponse = await _authService.Login(loginDto, cancellationToken);
+			if (authResponse.IsSuccess)
+				return Ok(authResponse);
+			return Unauthorized(authResponse);
 		}
 
 		[HttpPost("refresh")]
-		public IActionResult RefreshToken()
+		public async Task<IActionResult> RefreshToken(CancellationToken cancellationToken)
 		{
 			var refreshToken = Request.Cookies["refreshToken"];
 			if(string.IsNullOrEmpty(refreshToken))
 				return Unauthorized("Refresh token not found!");
 
-			var newAccessToken = _authService.RefreshToAccessToken(refreshToken);
-			if (newAccessToken == null)
-				return Unauthorized("Invalid or expired refresh token!");
+			var authResponse = await _authService.RefreshToAccessToken(refreshToken, cancellationToken);
+			if (authResponse.IsSuccess)
+				return Ok(authResponse);
 
-			return Ok(new { AccessToken = newAccessToken });
+			return Unauthorized(authResponse);
 		}
 	}
 }

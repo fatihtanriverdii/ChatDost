@@ -9,7 +9,7 @@ namespace ChatAPI.Core.Interfaces
 {
 	public interface IUserService
 	{
-		Task<List<User>> GetAllUsers();
+		Task<List<User>> GetAllUsers(CancellationToken cancellationToken);
 		Task<User?> GetUserById(int id);
 		Task AddUser(User user);
 		Task UpdateUser(User user);
