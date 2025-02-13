@@ -20,9 +20,10 @@ namespace ChatAPI.API.Controllers
 
 		[HttpGet]
 		[Authorize(Roles = "ADMIN")]
-		public IActionResult GetUsers()
+		public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
 		{
-			return Ok(_userService.GetAllUsers());
+			var users = await _userService.GetAllUsers(cancellationToken);
+			return Ok(users);
 		}
 
 		[HttpGet("{id}")]

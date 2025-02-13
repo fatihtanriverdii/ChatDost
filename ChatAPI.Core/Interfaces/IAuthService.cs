@@ -10,8 +10,8 @@ namespace ChatAPI.Core.Interfaces
 {
 	public interface IAuthService
 	{
-		Task<string> Register(RegisterDto registerDto);
-		Task<string> Login(LoginDto loginDto);
-		Task<string> RefreshToAccessToken(string refreshToken);
+		Task<AuthResponseDto> Register(RegisterDto registerDto, CancellationToken cancellationToken);
+		Task<AuthResponseDto> Login(LoginDto loginDto, CancellationToken cancellationToken);
+		Task<AuthResponseDto> RefreshToAccessToken(string refreshToken, CancellationToken cancellationToken);
 	}
 }

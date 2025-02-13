@@ -17,24 +17,24 @@ namespace ChatAPI.Service.Services
 			_userRepository = userRepository;
 		}
 
-		public async Task<List<User>> GetAllUsers()
+		public async Task<List<User>> GetAllUsers(CancellationToken cancellationToken)
 		{
-			return await _userRepository.GetAllUser();
+			return await _userRepository.GetAllUsersAsync(cancellationToken);
 		}
 
 		public async Task<User?> GetUserById(int id)
 		{
-			return await _userRepository.GetUserById(id);
+			return await _userRepository.GetUserByIdAsync(id);
 		}
 
 		public async Task AddUser(User user)
 		{
-			await _userRepository.AddUser(user);
+			await _userRepository.AddUserAsync(user);
 		}
 
 		public async Task UpdateUser(User user)
 		{
-			await _userRepository.UpdateUser(user);
+			await _userRepository.UpdateUserAsync(user);
 		}
 	}
 }

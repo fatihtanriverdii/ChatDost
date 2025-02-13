@@ -1,4 +1,5 @@
-﻿using ChatAPI.Core.Models;
+﻿using ChatAPI.Core.DTOs;
+using ChatAPI.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,11 @@ namespace ChatAPI.Core.Interfaces
 {
 	public interface IChatRepository
 	{
-		Task<int> CreateChatRoom(string roomName, int userId);
-		ChatRoom? GetChatRoomById(int chatRoomId);
+		Task<int> CreateChatRoomAsync(string roomName, int userId);
+		Task<ChatRoom?> GetChatRoomByIdAsync(int chatRoomId);
 		Task<Message> AddMessageAsync(Message message);
-		List<Message> GetMessages(int chatRoomId);
-		Task<List<ChatRoom>> GetChatRooms(int userId);
-		Task<int> JoinRoomAsync(int userId, string roomCode);
+		Task<List<Message>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken);
+		Task<List<ChatRoom>> GetChatRoomsAsync(int userId, CancellationToken cancellationToken);
+		Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode);
 	}
 }

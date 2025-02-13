@@ -33,17 +33,21 @@ namespace ChatAPI.Service.Services
 			_httpContextAccessor = httpContextAccessor;
 		}
 
-		public async Task<string> Login(LoginDto loginDto)
+		public async Task<AuthResponseDto> Login(LoginDto loginDto, CancellationToken cancellationToken)
 		{
-			var users = await _userRepository.GetAllUser();
+			var users = await _userRepository.GetAllUsersAsync(cancellationToken);
 			var user = users.FirstOrDefault(u => u.Username == loginDto.Username);
 			if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
-				return null;
+				return new AuthResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = "Username or Password invalid"
+				};
 
 			user.RefreshToken = GenerateRefreshToken();
 			user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
-			await _userRepository.UpdateUser(user);
+			await _userRepository.UpdateUserAsync(user);
 
 			_httpContextAccessor.HttpContext.Response.Cookies.Append("refreshToken", user.RefreshToken, new CookieOptions
 			{
@@ -53,22 +57,37 @@ namespace ChatAPI.Service.Services
 				SameSite = SameSiteMode.None
 			});
 
-			return GenerateJwtToken(user);
+			var token = GenerateJwtToken(user);
+
+			return new AuthResponseDto
+			{
+				IsSuccess = true,
+				Token = token,
+				Expiration = DateTime.UtcNow.AddDays(7)
+			};
 		}
 
-		public async Task<string> Register(RegisterDto registerDto)
+		public async Task<AuthResponseDto> Register(RegisterDto registerDto, CancellationToken cancellationToken)
 		{
-			var users = await _userRepository.GetAllUser();
-			if(users.Any(u => u.Username == registerDto.Username))
-				return null;
+			var users = await _userRepository.GetAllUsersAsync(cancellationToken);
+			if (users.Any(u => u.Username == registerDto.Username))
+				return new AuthResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = "Username already exist"
+				};
 
 			var newUser = _mapper.Map<User>(registerDto);
-
 			newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
+			await _userRepository.AddUserAsync(newUser);
+			var token = GenerateJwtToken(newUser);
 
-			await _userRepository.AddUser(newUser);
-
-			return GenerateJwtToken(newUser);
+			return new AuthResponseDto
+			{
+				IsSuccess = true,
+				Token = token,
+				Expiration = DateTime.UtcNow.AddDays(7)
+			};
 		}
 
 		private string GenerateJwtToken(User user)
@@ -107,17 +126,26 @@ namespace ChatAPI.Service.Services
 			}
 		}
 
-		public async Task<string> RefreshToAccessToken(string refreshToken)
+		public async Task<AuthResponseDto> RefreshToAccessToken(string refreshToken, CancellationToken cancellationToken)
 		{
-			var users = await _userRepository.GetAllUser();
+			var users = await _userRepository.GetAllUsersAsync(cancellationToken);
 			var user = users.FirstOrDefault(u => u.RefreshToken == refreshToken);
 
 			if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
-				return null;
+				return new AuthResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = "Token expiration is over or user not found"
+				};
 
 			var newAccessToken = GenerateJwtToken(user);
 
-			return newAccessToken;
+			return new AuthResponseDto
+			{
+				IsSuccess = true,
+				Token = newAccessToken,
+				Expiration = user.RefreshTokenExpiryTime
+			};
 		}
 	}
 }
