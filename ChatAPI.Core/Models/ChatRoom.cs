@@ -15,9 +15,9 @@ namespace ChatAPI.Core.Models
 		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int Id { get; set; }
 		[Required]
-		public string Name { get; set; } = string.Empty;
+		public string RoomName { get; set; } = string.Empty;
 		[Required]
-		public string Code { get; set; } = string.Empty;
+		public string RoomCode { get; set; } = string.Empty;
 		public ICollection<UserChatRoom> Users { get; set; } = new List<UserChatRoom>();
 		public ICollection<Message> Messages { get; set; } = new List<Message>();
 	}

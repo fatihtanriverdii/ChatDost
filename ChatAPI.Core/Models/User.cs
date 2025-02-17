@@ -21,7 +21,7 @@ namespace ChatAPI.Core.Models
 		[Required]
 		public string PasswordHash { get; set; } = string.Empty;
 		[Required]
-		public UserRole Role { get; set; } = UserRole.USER;
+		public UserRole Role { get; set; } = UserRole.User;
 		public string? RefreshToken { get; set; }
 		public DateTime RefreshTokenExpiryTime { get; set; }
 	}

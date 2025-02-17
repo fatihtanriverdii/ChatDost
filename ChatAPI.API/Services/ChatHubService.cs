@@ -12,12 +12,12 @@ namespace ChatAPI.API.Services
 			_hubContext = hubContext;
 		}
 
-		public async Task JoinRoom(string connectionId, string roomId)
+		public async Task JoinRoomAsync(string connectionId, int roomId)
 		{
-			await _hubContext.Groups.AddToGroupAsync(connectionId, roomId);
+			await _hubContext.Groups.AddToGroupAsync(connectionId, roomId.ToString());
 		}
 
-		public async Task SendMessageToRoom(int roomId, string message)
+		public async Task SendMessageToRoomAsync(int roomId, string message)
 		{
 			await _hubContext.Clients.Group(roomId.ToString()).SendAsync("Receive Message", message);
 		}

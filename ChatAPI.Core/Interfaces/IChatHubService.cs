@@ -8,7 +8,7 @@ namespace ChatAPI.Core.Interfaces
 {
 	public interface IChatHubService
 	{
-		Task SendMessageToRoom(int roomId, string message);
-		Task JoinRoom(string connectionId, string roomId);
+		Task SendMessageToRoomAsync(int roomId, string message);
+		Task JoinRoomAsync(string connectionId, int roomId);
 	}
 }

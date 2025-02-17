@@ -12,8 +12,8 @@ namespace ChatAPI.Core.Interfaces
 	{
 		Task<int> CreateChatRoomAsync(string roomName, string connectionId, int userId);
 		Task<bool> JoinRoomAsync(int userId, string connectionId, string roomCode);
-		Task<Message> SendMessageAsync(int senderId, SendMessageDto messageDto);
-		Task<List<Message>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken);
+		Task<MessageResponseDto> SendMessageAsync(int senderId, SendMessageDto messageDto);
+		Task<List<MessageResponseDto>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken);
 		Task<List<ChatRoomDto>> GetChatRoomsAsync(int userId, CancellationToken cancellationToken);
 	}
 }

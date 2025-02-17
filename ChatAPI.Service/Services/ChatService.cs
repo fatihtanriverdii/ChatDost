@@ -27,7 +27,7 @@ namespace ChatAPI.Service.Services
 		public async Task<int> CreateChatRoomAsync(string roomName, string connectionId, int userId)
 		{
 			var roomId = await _chatRepository.CreateChatRoomAsync(roomName, userId);
-			await _chatHubService.JoinRoom(connectionId, Convert.ToString(roomId));
+			await _chatHubService.JoinRoomAsync(connectionId, roomId);
 			return roomId;
 		}
 		public async Task<bool> JoinRoomAsync(int userId, string connectionId, string roomCode)
@@ -35,7 +35,7 @@ namespace ChatAPI.Service.Services
 			var response = await _chatRepository.JoinRoomAsync(userId, roomCode);
 			if (response.IsSuccess)
 			{
-				await _chatHubService.JoinRoom(connectionId, Convert.ToString(response.RoomId));
+				await _chatHubService.JoinRoomAsync(connectionId, response.RoomId);
 				return true;
 			}
 			else
@@ -51,12 +51,12 @@ namespace ChatAPI.Service.Services
 			return _mapper.Map<List<ChatRoomDto>>(rooms);
 		}
 
-		public async Task<List<Message>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken)
+		public async Task<List<MessageResponseDto>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken)
 		{
 			return await _chatRepository.GetMessagesAsync(chatRoomId, cancellationToken);
 		}
 
-		public async Task<Message> SendMessageAsync(int senderId, SendMessageDto messageDto)
+		public async Task<MessageResponseDto> SendMessageAsync(int senderId, SendMessageDto messageDto)
 		{
 			var message = new Message
 			{
@@ -66,10 +66,10 @@ namespace ChatAPI.Service.Services
 				SentAt = DateTime.UtcNow
 			};
 			
-			message = await _chatRepository.AddMessageAsync(message);
+			var messageResponseDto = await _chatRepository.AddMessageAsync(message);
+			await _chatHubService.SendMessageToRoomAsync(messageDto.ChatRoomId, message.Content);
 
-			await _chatHubService.SendMessageToRoom(messageDto.ChatRoomId, message.Content);
-			return message;
+			return messageResponseDto;
 		}
 	}
 }

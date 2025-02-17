@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ChatAPI.Core.DTOs
 {
 	public class SendMessageDto
 	{
+		[Required]
 		public int ChatRoomId { get; set; }
-		public string Content { get; set; }
+		[Required]
+		public string? Content { get; set; }
 	}
 }
