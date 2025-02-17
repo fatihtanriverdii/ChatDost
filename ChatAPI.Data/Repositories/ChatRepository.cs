@@ -3,11 +3,6 @@ using ChatAPI.Core.Interfaces;
 using ChatAPI.Core.Models;
 using ChatAPI.Data.Context;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChatAPI.Data.Repositories
 {
@@ -19,7 +14,7 @@ namespace ChatAPI.Data.Repositories
 		{
 			_context = context;
 		}
-		public async Task<int> CreateChatRoomAsync(string roomName, int userId)
+		public async Task<int> CreateChatRoomAsync(string roomName, int userId, CancellationToken cancellationToken)
 		{
 			var chatRoom = new ChatRoom
 			{
@@ -36,11 +31,11 @@ namespace ChatAPI.Data.Repositories
 			chatRoom.Users.Add(userChatRoom);
 			_context.ChatRooms.Add(chatRoom);
 			_context.UserChatRooms.Add(userChatRoom);
-			await _context.SaveChangesAsync();
+			await _context.SaveChangesAsync(cancellationToken);
 			return chatRoom.Id;
 		}
 
-		public async Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode)
+		public async Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode, CancellationToken cancellationToken)
 		{
 			var chatRoom = await _context.ChatRooms.FirstOrDefaultAsync(c => c.RoomCode == roomCode);
 			if (chatRoom == null)
@@ -57,7 +52,7 @@ namespace ChatAPI.Data.Repositories
 			{
 				var userChatRoom = new UserChatRoom { UserId = userId, ChatRoomId = chatRoom.Id };
 				_context.UserChatRooms.Add(userChatRoom);
-				await _context.SaveChangesAsync();
+				await _context.SaveChangesAsync(cancellationToken);
 				return new JoinRoomResponseDto
 				{
 					IsSuccess = true,
@@ -74,9 +69,9 @@ namespace ChatAPI.Data.Repositories
 			}
 		}
 
-		public async Task<ChatRoom?> GetChatRoomByIdAsync(int chatRoomId)
+		public async Task<ChatRoom?> GetChatRoomByIdAsync(int chatRoomId, CancellationToken cancellationToken)
 		{
-			return await _context.ChatRooms.FirstOrDefaultAsync(c => c.Id == chatRoomId);
+			return await _context.ChatRooms.FirstOrDefaultAsync(c => c.Id == chatRoomId, cancellationToken);
 		}
 
 		public async Task<List<ChatRoom>> GetChatRoomsAsync(int userId, CancellationToken cancellationToken)
@@ -117,12 +112,12 @@ namespace ChatAPI.Data.Repositories
 			}
 		}
 
-		public async Task<MessageResponseDto> AddMessageAsync(Message message)
+		public async Task<MessageResponseDto> AddMessageAsync(Message message, CancellationToken cancellationToken)
 		{
 			try
 			{
 				_context.Messages.Add(message);
-				await _context.SaveChangesAsync();
+				await _context.SaveChangesAsync(cancellationToken);
 				return new MessageResponseDto
 				{
 					IsSuccess = true,

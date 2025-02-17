@@ -1,6 +1,5 @@
 ﻿using ChatAPI.Core.DTOs;
 using ChatAPI.Core.Interfaces;
-using ChatAPI.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ChatAPI.API.Controllers
@@ -17,7 +16,7 @@ namespace ChatAPI.API.Controllers
 		}
 
 		[HttpPost("register")]
-		public async Task<IActionResult> Register([FromBody] RegisterDto registerDto, CancellationToken cancellationToken)
+		public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto registerDto, CancellationToken cancellationToken)
 		{
 			var authResponse = await _authService.Register(registerDto, cancellationToken);
 			if (authResponse.IsSuccess)
@@ -26,16 +25,28 @@ namespace ChatAPI.API.Controllers
 		}
 
 		[HttpPost("login")]
-		public async Task<IActionResult> Login([FromBody] LoginDto loginDto, CancellationToken cancellationToken)
+		public async Task<IActionResult> LoginAsync([FromBody] LoginDto loginDto, CancellationToken cancellationToken)
 		{
 			var authResponse = await _authService.Login(loginDto, cancellationToken);
 			if (authResponse.IsSuccess)
+			{
+				var cookieOptions = new CookieOptions
+				{
+					HttpOnly = true,
+					Secure = true,
+					SameSite = SameSiteMode.Strict,
+					Expires = DateTime.UtcNow.AddDays(7)
+				};
+				Response.Cookies.Append("refreshToken", authResponse.RefreshToken, cookieOptions);
+
 				return Ok(authResponse);
+			}
+
 			return Unauthorized(authResponse);
 		}
 
 		[HttpPost("refresh")]
-		public async Task<IActionResult> RefreshToken(CancellationToken cancellationToken)
+		public async Task<IActionResult> RefreshTokenAsync(CancellationToken cancellationToken)
 		{
 			var refreshToken = Request.Cookies["refreshToken"];
 			if(string.IsNullOrEmpty(refreshToken))

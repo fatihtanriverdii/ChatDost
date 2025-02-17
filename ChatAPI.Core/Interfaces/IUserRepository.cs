@@ -10,8 +10,10 @@ namespace ChatAPI.Core.Interfaces
 	public interface IUserRepository
 	{
 		Task<List<User>> GetAllUsersAsync(CancellationToken cancellationToken);
-		Task<User?> GetUserByIdAsync(int id);
-		Task AddUserAsync(User user);
-		Task UpdateUserAsync(User user);
+		Task<User?> GetUserByIdAsync(int id, CancellationToken cancellationToken);
+		Task AddUserAsync(User user, CancellationToken cancellationToken);
+		Task UpdateUserAsync(User user, CancellationToken cancellationToken);
+		Task<User?> GetUserByUsernameAsync(string username, CancellationToken cancellationToken);
+		Task<User?> GetUserByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken);
 	}
 }

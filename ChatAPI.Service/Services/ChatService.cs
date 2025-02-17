@@ -2,12 +2,6 @@
 using ChatAPI.Core.DTOs;
 using ChatAPI.Core.Interfaces;
 using ChatAPI.Core.Models;
-using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChatAPI.Service.Services
 {
@@ -24,15 +18,15 @@ namespace ChatAPI.Service.Services
 			_chatHubService = chatHubService;
 		}
 
-		public async Task<int> CreateChatRoomAsync(string roomName, string connectionId, int userId)
+		public async Task<int> CreateChatRoomAsync(string roomName, string connectionId, int userId, CancellationToken cancellationToken)
 		{
-			var roomId = await _chatRepository.CreateChatRoomAsync(roomName, userId);
+			var roomId = await _chatRepository.CreateChatRoomAsync(roomName, userId, cancellationToken);
 			await _chatHubService.JoinRoomAsync(connectionId, roomId);
 			return roomId;
 		}
-		public async Task<bool> JoinRoomAsync(int userId, string connectionId, string roomCode)
+		public async Task<bool> JoinRoomAsync(int userId, string connectionId, string roomCode, CancellationToken cancellationToken)
 		{
-			var response = await _chatRepository.JoinRoomAsync(userId, roomCode);
+			var response = await _chatRepository.JoinRoomAsync(userId, roomCode, cancellationToken);
 			if (response.IsSuccess)
 			{
 				await _chatHubService.JoinRoomAsync(connectionId, response.RoomId);
@@ -40,7 +34,6 @@ namespace ChatAPI.Service.Services
 			}
 			else
 			{
-				Console.WriteLine($"Error: {response.ErrorMessage}");
 				return false;
 			}
 		}
@@ -56,7 +49,7 @@ namespace ChatAPI.Service.Services
 			return await _chatRepository.GetMessagesAsync(chatRoomId, cancellationToken);
 		}
 
-		public async Task<MessageResponseDto> SendMessageAsync(int senderId, SendMessageDto messageDto)
+		public async Task<MessageResponseDto> SendMessageAsync(int senderId, SendMessageDto messageDto, CancellationToken cancellationToken)
 		{
 			var message = new Message
 			{
@@ -66,7 +59,7 @@ namespace ChatAPI.Service.Services
 				SentAt = DateTime.UtcNow
 			};
 			
-			var messageResponseDto = await _chatRepository.AddMessageAsync(message);
+			var messageResponseDto = await _chatRepository.AddMessageAsync(message, cancellationToken);
 			await _chatHubService.SendMessageToRoomAsync(messageDto.ChatRoomId, message.Content);
 
 			return messageResponseDto;

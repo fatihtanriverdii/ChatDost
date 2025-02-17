@@ -1,11 +1,6 @@
 ﻿using AutoMapper;
 using ChatAPI.Core.DTOs;
 using ChatAPI.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChatAPI.Service.Mapping
 {
@@ -18,7 +13,11 @@ namespace ChatAPI.Service.Mapping
 
 			CreateMap<ChatRoom, ChatRoomDto>()
 				.ForMember(dest => dest.UserCount, opt => opt.MapFrom(src => src.Users.Count))
-				.ForMember(dest => dest.LastMessage, opt => opt.MapFrom(src => src.Messages.OrderByDescending(m => m.SentAt).FirstOrDefault().Content));
+				.ForMember(dest => dest.LastMessage, opt => opt.MapFrom(src => src.Messages.Any()
+														? src.Messages.OrderByDescending(m => m.SentAt).First().Content
+														: string.Empty
+							)
+				);
 		}
 	}
 }

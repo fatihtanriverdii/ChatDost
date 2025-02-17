@@ -1,10 +1,5 @@
 ﻿using ChatAPI.Core.Interfaces;
 using ChatAPI.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ChatAPI.Service.Services
 {
@@ -17,24 +12,24 @@ namespace ChatAPI.Service.Services
 			_userRepository = userRepository;
 		}
 
-		public async Task<List<User>> GetAllUsers(CancellationToken cancellationToken)
+		public async Task<List<User>> GetAllUsersAsync(CancellationToken cancellationToken)
 		{
 			return await _userRepository.GetAllUsersAsync(cancellationToken);
 		}
 
-		public async Task<User?> GetUserById(int id)
+		public async Task<User?> GetUserByIdAsync(int id, CancellationToken cancellationToken)
 		{
-			return await _userRepository.GetUserByIdAsync(id);
+			return await _userRepository.GetUserByIdAsync(id, cancellationToken);
 		}
 
-		public async Task AddUser(User user)
+		public async Task AddUserAsync(User user, CancellationToken cancellationToken)
 		{
-			await _userRepository.AddUserAsync(user);
+			await _userRepository.AddUserAsync(user, cancellationToken);
 		}
 
-		public async Task UpdateUser(User user)
+		public async Task UpdateUserAsync(User user, CancellationToken cancellationToken)
 		{
-			await _userRepository.UpdateUserAsync(user);
+			await _userRepository.UpdateUserAsync(user, cancellationToken);
 		}
 	}
 }

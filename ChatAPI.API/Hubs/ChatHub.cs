@@ -1,16 +1,15 @@
 ﻿using ChatAPI.Core.Interfaces;
-using ChatAPI.Core.Models;
-using ChatAPI.Data.Context;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
+using System.Collections.Concurrent;
+
 
 namespace ChatAPI.API.Hubs
 {
 	[Authorize]
 	public class ChatHub : Hub
 	{
-		private static readonly Dictionary<int, string> _userConnections = new();
+		private static readonly ConcurrentDictionary<int, string> _userConnections = new();
 		private readonly IChatService _chatService;
 
 		public ChatHub(IChatService chatService)
@@ -54,7 +53,7 @@ namespace ChatAPI.API.Hubs
 			if (userId != null)
 			{
 				int parsedUserId = int.Parse(userId);
-				_userConnections.Remove(parsedUserId);
+				_userConnections.TryRemove(parsedUserId, out _);
 			}
 
 			await base.OnDisconnectedAsync(exception);
@@ -62,7 +61,8 @@ namespace ChatAPI.API.Hubs
 
 		public static string? GetConnectionId(int userId)
 		{
-			return _userConnections[userId];
+			_userConnections.TryGetValue(userId, out var connectionId);
+			return connectionId;
 		}
 	}
 }

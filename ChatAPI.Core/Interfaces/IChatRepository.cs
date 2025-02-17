@@ -10,11 +10,11 @@ namespace ChatAPI.Core.Interfaces
 {
 	public interface IChatRepository
 	{
-		Task<int> CreateChatRoomAsync(string roomName, int userId);
-		Task<ChatRoom?> GetChatRoomByIdAsync(int chatRoomId);
-		Task<MessageResponseDto> AddMessageAsync(Message message);
+		Task<int> CreateChatRoomAsync(string roomName, int userId,CancellationToken cancellationToken);
+		Task<ChatRoom?> GetChatRoomByIdAsync(int chatRoomId, CancellationToken cancellationToken);
+		Task<MessageResponseDto> AddMessageAsync(Message message, CancellationToken cancellationToken);
 		Task<List<MessageResponseDto>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken);
 		Task<List<ChatRoom>> GetChatRoomsAsync(int userId, CancellationToken cancellationToken);
-		Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode);
+		Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode, CancellationToken cancellationToken);
 	}
 }

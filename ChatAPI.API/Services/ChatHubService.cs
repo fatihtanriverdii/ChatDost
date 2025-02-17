@@ -7,6 +7,7 @@ namespace ChatAPI.API.Services
 	public class ChatHubService : IChatHubService
 	{
 		private readonly IHubContext<ChatHub> _hubContext;
+		private const string ReceiveMessageMethod = "ReceiveMessage";
 		public ChatHubService(IHubContext<ChatHub> hubContext)
 		{
 			_hubContext = hubContext;
@@ -14,12 +15,20 @@ namespace ChatAPI.API.Services
 
 		public async Task JoinRoomAsync(string connectionId, int roomId)
 		{
-			await _hubContext.Groups.AddToGroupAsync(connectionId, roomId.ToString());
+			try
+			{
+				await _hubContext.Groups.AddToGroupAsync(connectionId, roomId.ToString());
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error while adding connection {connectionId} to room {roomId}: {ex.Message}");
+			}
+
 		}
 
 		public async Task SendMessageToRoomAsync(int roomId, string message)
 		{
-			await _hubContext.Clients.Group(roomId.ToString()).SendAsync("Receive Message", message);
+			await _hubContext.Clients.Group(roomId.ToString()).SendAsync(ReceiveMessageMethod, message);
 		}
 	}
 }
