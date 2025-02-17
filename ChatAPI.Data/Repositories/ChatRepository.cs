@@ -23,8 +23,8 @@ namespace ChatAPI.Data.Repositories
 		{
 			var chatRoom = new ChatRoom
 			{
-				Name = roomName,
-				Code = Guid.NewGuid().ToString().Substring(0, 6)
+				RoomName = roomName,
+				RoomCode = Guid.NewGuid().ToString().Substring(0, 6)
 			};
 
 			var userChatRoom = new UserChatRoom
@@ -42,7 +42,7 @@ namespace ChatAPI.Data.Repositories
 
 		public async Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode)
 		{
-			var chatRoom = await _context.ChatRooms.FirstOrDefaultAsync(c => c.Code == roomCode);
+			var chatRoom = await _context.ChatRooms.FirstOrDefaultAsync(c => c.RoomCode == roomCode);
 			if (chatRoom == null)
 				return new JoinRoomResponseDto
 				{
@@ -87,19 +87,59 @@ namespace ChatAPI.Data.Repositories
 			.ToListAsync(cancellationToken);
 		}
 
-		public async Task<List<Message>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken)
+		public async Task<List<MessageResponseDto>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken)
 		{
-			return await _context.Messages
-				.Where(m => m.ChatRoomId == chatRoomId)
-				.OrderBy(m => m.SentAt)
-				.ToListAsync(cancellationToken);
+			try
+			{
+				return await _context.Messages
+					.Where(m => m.ChatRoomId == chatRoomId)
+					.OrderBy(m => m.SentAt)
+					.Select(m => new MessageResponseDto
+					{
+						IsSuccess = true,
+						ChatRoomId = m.ChatRoomId,
+						SenderId = m.SenderId,
+						Content = m.Content,
+						SentAt = m.SentAt,
+					})
+					.ToListAsync(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				return new List<MessageResponseDto>
+				{
+					new MessageResponseDto
+					{
+						IsSuccess = false,
+						ErrorMessage = ex.Message
+					}
+				};
+			}
 		}
 
-		public async Task<Message> AddMessageAsync(Message message)
+		public async Task<MessageResponseDto> AddMessageAsync(Message message)
 		{
-			_context.Messages.Add(message);
-			await _context.SaveChangesAsync();
-			return message;
+			try
+			{
+				_context.Messages.Add(message);
+				await _context.SaveChangesAsync();
+				return new MessageResponseDto
+				{
+					IsSuccess = true,
+					ChatRoomId = message.ChatRoomId,
+					SenderId = message.SenderId,
+					Content = message.Content,
+					SentAt = message.SentAt
+				};
+			}
+			catch (Exception ex)
+			{
+				return new MessageResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = ex.Message
+				};
+			}
 		}
 	}
 }

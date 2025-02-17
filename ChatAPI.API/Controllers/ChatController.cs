@@ -27,7 +27,7 @@ namespace ChatAPI.API.Controllers
 				return Unauthorized("User not authenticated!");
 
 			var connectionId = ChatHub.GetConnectionId(int.Parse(userId));
-			var chatRoomId = await _chatService.CreateChatRoomAsync(createRoomDto.roomName, connectionId, int.Parse(userId));
+			var chatRoomId = await _chatService.CreateChatRoomAsync(createRoomDto.RoomName, connectionId, int.Parse(userId));
 			return Ok(chatRoomId);
 		}
 
@@ -39,7 +39,7 @@ namespace ChatAPI.API.Controllers
 				return Unauthorized("User not authenticated!");
 
 			var connectionId = ChatHub.GetConnectionId(int.Parse(userId));
-			var result = await _chatService.JoinRoomAsync(int.Parse(userId), connectionId, joinRoomDto.roomCode);
+			var result = await _chatService.JoinRoomAsync(int.Parse(userId), connectionId, joinRoomDto.RoomCode);
 			return result ? Ok("Joined successfully") : BadRequest("Invalid room code!");
 		}
 
@@ -51,8 +51,15 @@ namespace ChatAPI.API.Controllers
 			if (userId == null)
 				return Unauthorized("User not authenticated!");
 
-			var message = await _chatService.SendMessageAsync(int.Parse(userId), messageDto);
-			return Ok(message);
+			var sendM = await _chatService.SendMessageAsync(int.Parse(userId), messageDto);
+			if (sendM.IsSuccess)
+			{
+				return Ok("Message sent succesfully");
+			}
+			else
+			{
+				return BadRequest("Error: " + sendM.ErrorMessage);
+			}
 		}
 
 		[HttpGet("chat-rooms")]
@@ -68,9 +75,9 @@ namespace ChatAPI.API.Controllers
 		}
 
 		[HttpGet("messages/{chatRoomId}")]
-		public IActionResult GetMessages(int chatRoomId, CancellationToken cancellationToken) 
+		public async Task<IActionResult> GetMessages(int chatRoomId, CancellationToken cancellationToken) 
 		{
-			var messages = _chatService.GetMessagesAsync(chatRoomId, cancellationToken);
+			var messages = await _chatService.GetMessagesAsync(chatRoomId, cancellationToken);
 			return Ok(messages);
 		}
 	}
