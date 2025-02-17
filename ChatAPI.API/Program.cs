@@ -31,6 +31,8 @@ builder.Services.AddCors(options =>
 		});
 });
 
+builder.Configuration["Jwt:Key"] = Environment.GetEnvironmentVariable("JWT_SECRET");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 	options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -85,19 +87,15 @@ if (app.Environment.IsDevelopment())
 	app.UseSwaggerUI();
 }
 
-app.UseCors("AllowFrontend");
-
 app.UseRouting();
 
-app.MapControllers();
-
-app.UseHttpsRedirection();
-
-app.UseWebSockets();
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
-
 app.UseAuthorization();
+
+app.UseWebSockets();
+app.UseHttpsRedirection();
 
 app.MapHub<ChatHub>("/chatHub");
 

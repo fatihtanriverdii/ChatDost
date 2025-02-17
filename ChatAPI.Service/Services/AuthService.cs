@@ -1,20 +1,14 @@
 ﻿using AutoMapper;
-using Azure;
-using BCrypt.Net;
 using ChatAPI.Core.DTOs;
 using ChatAPI.Core.Interfaces;
 using ChatAPI.Core.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ChatAPI.Service.Services
 {
@@ -35,8 +29,7 @@ namespace ChatAPI.Service.Services
 
 		public async Task<AuthResponseDto> Login(LoginDto loginDto, CancellationToken cancellationToken)
 		{
-			var users = await _userRepository.GetAllUsersAsync(cancellationToken);
-			var user = users.FirstOrDefault(u => u.Username == loginDto.Username);
+			var user = await _userRepository.GetUserByUsernameAsync(loginDto.Username, cancellationToken);
 			if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
 				return new AuthResponseDto
 				{
@@ -47,15 +40,7 @@ namespace ChatAPI.Service.Services
 			user.RefreshToken = GenerateRefreshToken();
 			user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
 
-			await _userRepository.UpdateUserAsync(user);
-
-			_httpContextAccessor.HttpContext.Response.Cookies.Append("refreshToken", user.RefreshToken, new CookieOptions
-			{
-				HttpOnly = true,
-				Secure = true,
-				Expires = DateTime.UtcNow.AddDays(7),
-				SameSite = SameSiteMode.None
-			});
+			await _userRepository.UpdateUserAsync(user, cancellationToken);
 
 			var token = GenerateJwtToken(user);
 
@@ -63,14 +48,15 @@ namespace ChatAPI.Service.Services
 			{
 				IsSuccess = true,
 				Token = token,
-				Expiration = DateTime.UtcNow.AddDays(7)
+				RefreshToken = user.RefreshToken,
+				Expiration = user.RefreshTokenExpiryTime
 			};
 		}
 
 		public async Task<AuthResponseDto> Register(RegisterDto registerDto, CancellationToken cancellationToken)
 		{
-			var users = await _userRepository.GetAllUsersAsync(cancellationToken);
-			if (users.Any(u => u.Username == registerDto.Username))
+			var user = await _userRepository.GetUserByUsernameAsync(registerDto.Username, cancellationToken);
+			if (user != null)
 				return new AuthResponseDto
 				{
 					IsSuccess = false,
@@ -79,7 +65,7 @@ namespace ChatAPI.Service.Services
 
 			var newUser = _mapper.Map<User>(registerDto);
 			newUser.PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
-			await _userRepository.AddUserAsync(newUser);
+			await _userRepository.AddUserAsync(newUser, cancellationToken);
 			var token = GenerateJwtToken(newUser);
 
 			return new AuthResponseDto
@@ -128,8 +114,7 @@ namespace ChatAPI.Service.Services
 
 		public async Task<AuthResponseDto> RefreshToAccessToken(string refreshToken, CancellationToken cancellationToken)
 		{
-			var users = await _userRepository.GetAllUsersAsync(cancellationToken);
-			var user = users.FirstOrDefault(u => u.RefreshToken == refreshToken);
+			var user = await _userRepository.GetUserByRefreshTokenAsync(refreshToken, cancellationToken);
 
 			if (user == null || user.RefreshTokenExpiryTime < DateTime.UtcNow)
 				return new AuthResponseDto

@@ -1,6 +1,5 @@
 ﻿using ChatAPI.Core.Interfaces;
 using ChatAPI.Core.Models;
-using ChatAPI.Service.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,17 +18,17 @@ namespace ChatAPI.API.Controllers
 		}
 
 		[HttpGet]
-		[Authorize(Roles = "ADMIN")]
-		public async Task<IActionResult> GetUsers(CancellationToken cancellationToken)
+		[Authorize(Roles = "Admin")]
+		public async Task<IActionResult> GetAllUsersAsync(CancellationToken cancellationToken)
 		{
-			var users = await _userService.GetAllUsers(cancellationToken);
+			var users = await _userService.GetAllUsersAsync(cancellationToken);
 			return Ok(users);
 		}
 
 		[HttpGet("{id}")]
-		public IActionResult GetUserById(int id)
+		public async Task<IActionResult> GetUserByIdAsync(int id, CancellationToken cancellationToken)
 		{
-			var user = _userService.GetUserById(id);
+			var user = await _userService.GetUserByIdAsync(id, cancellationToken);
 			if(user == null)
 				return NotFound("User not found!");
 			return Ok(user);
@@ -37,10 +36,10 @@ namespace ChatAPI.API.Controllers
 
 		[HttpPost]
 		[AllowAnonymous]
-		public IActionResult AddUser([FromBody] User user)
+		public async Task<IActionResult> AddUserAsync([FromBody] User user, CancellationToken cancellationToken)
 		{
-			var createdUser = _userService.AddUser(user);
-			return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
+			await _userService.AddUserAsync(user, cancellationToken);
+			return CreatedAtAction(nameof(GetUserByIdAsync), new {id = user.Id}, user);
 		}
 
 	}
