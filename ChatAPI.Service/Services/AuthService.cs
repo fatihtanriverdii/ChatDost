@@ -17,40 +17,79 @@ namespace ChatAPI.Service.Services
 		private readonly IUserRepository _userRepository;
 		private readonly IMapper _mapper;
 		private readonly IConfiguration _configuration;
-		private readonly IHttpContextAccessor _httpContextAccessor;	
 
-		public AuthService(IUserRepository userRepository, IMapper mapper, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
+		public AuthService(IUserRepository userRepository, IMapper mapper, IConfiguration configuration)
 		{
 			_userRepository = userRepository;
 			_mapper = mapper;
-			_configuration = configuration;
-			_httpContextAccessor = httpContextAccessor;
+			_configuration = configuration;		
 		}
 
 		public async Task<AuthResponseDto> Login(LoginDto loginDto, CancellationToken cancellationToken)
 		{
 			var user = await _userRepository.GetUserByUsernameAsync(loginDto.Username, cancellationToken);
 			if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+			{
 				return new AuthResponseDto
 				{
 					IsSuccess = false,
 					ErrorMessage = "Username or Password invalid"
 				};
-
-			user.RefreshToken = GenerateRefreshToken();
-			user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
-
-			await _userRepository.UpdateUserAsync(user, cancellationToken);
-
-			var token = GenerateJwtToken(user);
-
-			return new AuthResponseDto
+			}
+			else
 			{
-				IsSuccess = true,
-				Token = token,
-				RefreshToken = user.RefreshToken,
-				Expiration = user.RefreshTokenExpiryTime
-			};
+				user.RefreshToken = GenerateRefreshToken();
+				user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+				await _userRepository.UpdateUserAsync(user, cancellationToken);
+
+
+				var token = GenerateJwtToken(user);
+
+				return new AuthResponseDto
+				{
+					IsSuccess = true,
+					Token = token,
+					RefreshToken = user.RefreshToken,
+					Expiration = user.RefreshTokenExpiryTime
+				};
+			}
+		}
+
+		public async Task<AuthResponseDto> LoginAdminAsync(LoginDto loginDto, CancellationToken cancellationToken)
+		{
+			var user = await _userRepository.GetUserByUsernameAsync(loginDto.Username, cancellationToken);
+			if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+			{
+				return new AuthResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = "Username or Password invalid"
+				};
+			}
+			else if (user.Role == 0)
+			{
+				user.RefreshToken = GenerateRefreshToken();
+				user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+
+				var token = GenerateJwtToken(user);
+
+				return new AuthResponseDto
+				{
+					IsSuccess = true,
+					Token = token,
+					RefreshToken = user.RefreshToken,
+					Expiration = user.RefreshTokenExpiryTime
+				};
+			}
+			else
+			{
+				return new AuthResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = "invalid authorization"
+				};
+			}
 		}
 
 		public async Task<AuthResponseDto> Register(RegisterDto registerDto, CancellationToken cancellationToken)

@@ -1,25 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ChatAPI.Core.Enums;
 
 namespace ChatAPI.Core.DTOs
 {
-	public class RegisterDto
+	public class UserProfileDto
 	{
-		[Required]
 		public string Name { get; set; } = string.Empty;
-		[Required]
 		public string Surname { get; set; } = string.Empty;
-		[Required]
 		public string Username { get; set; } = string.Empty;
-		[Required]
 		public string Gender { get; set; } = string.Empty;
-		[Required]
-		[EmailAddress]
 		public string Email { get; set; } = string.Empty;
-		[Required]
-		public string Password { get; set; } = string.Empty;
-		[Required]
+		public string Role { get; set; } = string.Empty;
 		public int Age { get; set; }
-		[Required]
-		public string Job {	get; set; } = string.Empty;
+		public string Job { get; set; } = string.Empty;
+		public bool IsActive { get; set; }
 	}
 }

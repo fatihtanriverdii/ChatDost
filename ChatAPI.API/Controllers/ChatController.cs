@@ -3,6 +3,7 @@ using ChatAPI.Core.DTOs;
 using ChatAPI.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 
 namespace ChatAPI.API.Controllers
@@ -31,6 +32,15 @@ namespace ChatAPI.API.Controllers
 			return Ok(chatRoomId);
 		}
 
+		[HttpDelete("room/{roomId}")]
+		public async Task<IActionResult> DeleteChatRoomByIdAsync(int roomId, CancellationToken cancellationToken)
+		{
+			var response = await _chatService.DeleteChatRoomByIdAsync(roomId, cancellationToken);
+			if(response)
+				return Ok("Delete is successful");
+			return BadRequest();
+		}
+
 		[HttpPost("join-room")]
 		public async Task<IActionResult> JoinRoomAsync([FromBody] JoinRoomDto joinRoomDto, CancellationToken cancellationToken)
 		{
@@ -48,13 +58,15 @@ namespace ChatAPI.API.Controllers
 		public async Task<IActionResult> SendMessageAsync([FromBody] SendMessageDto messageDto, CancellationToken cancellationToken)
 		{
 			var userId = User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value;
+			var username = User.FindFirst(ClaimTypes.Name)?.Value;
+
 			if (userId == null)
 				return Unauthorized("User not authenticated!");
 
-			var sendM = await _chatService.SendMessageAsync(int.Parse(userId), messageDto, cancellationToken);
+			var sendM = await _chatService.SendMessageAsync(int.Parse(userId), username, messageDto, cancellationToken);
 			if (sendM.IsSuccess)
 			{
-				return Ok("Message sent succesfully");
+				return Ok(sendM);
 			}
 			else
 			{
