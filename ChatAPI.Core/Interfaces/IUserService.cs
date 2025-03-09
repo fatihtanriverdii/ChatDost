@@ -1,17 +1,15 @@
-﻿using ChatAPI.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using ChatAPI.Core.DTOs;
+using ChatAPI.Core.Models;
 
 namespace ChatAPI.Core.Interfaces
 {
 	public interface IUserService
 	{
-		Task<List<User>> GetAllUsersAsync(CancellationToken cancellationToken);
-		Task<User?> GetUserByIdAsync(int id, CancellationToken cancellationToken);
-		Task AddUserAsync(User user, CancellationToken cancellationToken);
-		Task UpdateUserAsync(User user, CancellationToken cancellationToken);
+		Task<List<UserProfileDto>> GetAllUsersAsync(CancellationToken cancellationToken);
+		Task<UserProfileDto> GetUserByIdAsync(int id, CancellationToken cancellationToken);
+		Task<UserResponseDto> AddUserAsync(User user, CancellationToken cancellationToken);
+		Task<UserResponseDto> UpdateUserAsync(UpdateUserDto updateUserDto, int id, CancellationToken cancellationToken);
+		Task<UserResponseDto> DeleteUserByIdAsync(int id, CancellationToken cancellationToken);
+		Task<UserResponseDto> DeleteUserByUsernameAsync(string username, CancellationToken cancellationToken);
 	}
 }

@@ -34,7 +34,7 @@ namespace ChatAPI.API.Controllers
 				{
 					HttpOnly = true,
 					Secure = true,
-					SameSite = SameSiteMode.Strict,
+					SameSite = SameSiteMode.None,
 					Expires = DateTime.UtcNow.AddDays(7)
 				};
 				Response.Cookies.Append("refreshToken", authResponse.RefreshToken, cookieOptions);
@@ -42,6 +42,26 @@ namespace ChatAPI.API.Controllers
 				return Ok(authResponse);
 			}
 
+			return Unauthorized(authResponse);
+		}
+
+		[HttpPost("admin/login")]
+		public async Task<IActionResult> LoginAdminAsync(LoginDto loginDto, CancellationToken cancellationToken)
+		{
+			var authResponse = await _authService.LoginAdminAsync(loginDto, cancellationToken);
+			if (authResponse.IsSuccess)
+			{
+				var cookieOptions = new CookieOptions
+				{
+					HttpOnly = true,
+					Secure = true,
+					SameSite = SameSiteMode.None,
+					Expires = DateTime.UtcNow.AddDays(7)
+				};
+				Response.Cookies.Append("refreshToken", authResponse.RefreshToken, cookieOptions);
+
+				return Ok(authResponse);
+			}
 			return Unauthorized(authResponse);
 		}
 

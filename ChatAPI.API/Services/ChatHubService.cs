@@ -1,4 +1,5 @@
 ﻿using ChatAPI.API.Hubs;
+using ChatAPI.Core.DTOs;
 using ChatAPI.Core.Interfaces;
 using Microsoft.AspNetCore.SignalR;
 
@@ -26,9 +27,9 @@ namespace ChatAPI.API.Services
 
 		}
 
-		public async Task SendMessageToRoomAsync(int roomId, string message)
+		public async Task SendMessageToRoomAsync(int roomId, MessageResponseDto messageResponseDto)
 		{
-			await _hubContext.Clients.Group(roomId.ToString()).SendAsync(ReceiveMessageMethod, message);
+			await _hubContext.Clients.Group(roomId.ToString()).SendAsync(ReceiveMessageMethod, messageResponseDto);
 		}
 	}
 }

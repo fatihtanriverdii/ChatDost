@@ -1,4 +1,5 @@
-﻿using ChatAPI.Core.Interfaces;
+﻿using ChatAPI.Core.DTOs;
+using ChatAPI.Core.Interfaces;
 using ChatAPI.Core.Models;
 using ChatAPI.Data.Context;
 using Microsoft.EntityFrameworkCore;
@@ -56,12 +57,12 @@ namespace ChatAPI.Data.Repositories
 		{
 			try
 			{
-				_context.Users.Update(user);
+				_context.Entry(user).State = EntityState.Modified;
 				await _context.SaveChangesAsync(cancellationToken);
 			}
 			catch (Exception ex)
 			{
-				throw new Exception("An error while updating user: " + ex);
+				throw new Exception("An error while updating user: " + ex.Message);
 			}
 		}
 
@@ -74,7 +75,7 @@ namespace ChatAPI.Data.Repositories
 			}
 			catch(Exception ex)
 			{
-				throw new Exception("An error while getting user: " + ex);
+				throw new Exception("An error while getting user: " + ex.Message);
 			}
 		}
 
@@ -87,7 +88,77 @@ namespace ChatAPI.Data.Repositories
 			}
 			catch (Exception ex)
 			{
-				throw new Exception("An Error while getting user: " + ex);
+				throw new Exception("An Error while getting user: " + ex.Message);
+			}
+		}
+
+		public async Task DeleteUserByIdAsync(int id, CancellationToken cancellationToken)
+		{
+			try
+			{
+				var user = await _context.Users.FindAsync(id, cancellationToken);
+				_context.Users.Remove(user);
+				await _context.SaveChangesAsync(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("An Error while delete user: " + ex.Message);
+			}
+		}
+
+		public async Task DeleteUserByUsernameAsync(string username, CancellationToken cancellationToken)
+		{
+			try
+			{
+				var user = await _context.Users.FirstOrDefaultAsync(u =>u.Username == username, cancellationToken);
+				_context.Users.Remove(user);
+				await _context.SaveChangesAsync(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception("An Error while delete user: " + ex.Message);
+			}
+		}
+
+		public async Task<AdminDashboardResponseDto> CountAllUsersAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				var users = await _context.Users.CountAsync(cancellationToken);
+				return new AdminDashboardResponseDto
+				{
+					IsSuccess = true,
+					TotalUsers = users
+				};
+			}
+			catch (Exception ex)
+			{
+				return new AdminDashboardResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = ex.Message
+				};
+			}
+		}
+
+		public async Task<AdminDashboardResponseDto> CountIsActiveUsersAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				var activeUsers = await _context.Users.CountAsync(u => u.IsActive, cancellationToken);
+				return new AdminDashboardResponseDto
+				{
+					IsSuccess = true,
+					ActiveUsers = activeUsers
+				};
+			}
+			catch (Exception ex)
+			{
+				return new AdminDashboardResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = ex.Message
+				};
 			}
 		}
 	}

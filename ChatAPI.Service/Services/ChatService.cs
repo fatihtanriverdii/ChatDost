@@ -24,6 +24,17 @@ namespace ChatAPI.Service.Services
 			await _chatHubService.JoinRoomAsync(connectionId, roomId);
 			return roomId;
 		}
+
+		public async Task<bool> DeleteChatRoomByIdAsync(int roomId, CancellationToken cancellationToken)
+		{
+			var chatRoom = await _chatRepository.GetChatRoomByIdAsync(roomId, cancellationToken);
+			if (chatRoom != null)
+			{
+				await _chatRepository.DeleteChatRoomByIdAsync(roomId, cancellationToken);
+				return true;
+			}
+			return false;
+		}
 		public async Task<bool> JoinRoomAsync(int userId, string connectionId, string roomCode, CancellationToken cancellationToken)
 		{
 			var response = await _chatRepository.JoinRoomAsync(userId, roomCode, cancellationToken);
@@ -46,21 +57,22 @@ namespace ChatAPI.Service.Services
 
 		public async Task<List<MessageResponseDto>> GetMessagesAsync(int chatRoomId, CancellationToken cancellationToken)
 		{
+			
 			return await _chatRepository.GetMessagesAsync(chatRoomId, cancellationToken);
 		}
 
-		public async Task<MessageResponseDto> SendMessageAsync(int senderId, SendMessageDto messageDto, CancellationToken cancellationToken)
+		public async Task<MessageResponseDto> SendMessageAsync(int senderId, string username, SendMessageDto messageDto, CancellationToken cancellationToken)
 		{
 			var message = new Message
 			{
 				ChatRoomId = messageDto.ChatRoomId,
 				SenderId = senderId,
 				Content = messageDto.Content,
-				SentAt = DateTime.UtcNow
+				SentAt = DateTime.UtcNow,
 			};
 			
-			var messageResponseDto = await _chatRepository.AddMessageAsync(message, cancellationToken);
-			await _chatHubService.SendMessageToRoomAsync(messageDto.ChatRoomId, message.Content);
+			var messageResponseDto = await _chatRepository.AddMessageAsync(message, username, cancellationToken);
+			await _chatHubService.SendMessageToRoomAsync(messageDto.ChatRoomId, messageResponseDto);
 
 			return messageResponseDto;
 		}

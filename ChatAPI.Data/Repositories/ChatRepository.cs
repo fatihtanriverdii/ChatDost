@@ -35,6 +35,20 @@ namespace ChatAPI.Data.Repositories
 			return chatRoom.Id;
 		}
 
+		public async Task DeleteChatRoomByIdAsync(int id, CancellationToken cancellationToken)
+		{
+			try
+			{
+				var chatRoom = await _context.ChatRooms.FindAsync(id, cancellationToken);
+				_context.ChatRooms.Remove(chatRoom);
+				await _context.SaveChangesAsync(cancellationToken);
+			}
+			catch (Exception ex)
+			{
+				throw new Exception($"An error while chatroom is deleting: {ex.Message}");
+			}
+		}
+
 		public async Task<JoinRoomResponseDto> JoinRoomAsync(int userId, string roomCode, CancellationToken cancellationToken)
 		{
 			var chatRoom = await _context.ChatRooms.FirstOrDefaultAsync(c => c.RoomCode == roomCode);
@@ -94,6 +108,7 @@ namespace ChatAPI.Data.Repositories
 						IsSuccess = true,
 						ChatRoomId = m.ChatRoomId,
 						SenderId = m.SenderId,
+						SenderUsername = m.Sender.Username,
 						Content = m.Content,
 						SentAt = m.SentAt,
 					})
@@ -112,17 +127,19 @@ namespace ChatAPI.Data.Repositories
 			}
 		}
 
-		public async Task<MessageResponseDto> AddMessageAsync(Message message, CancellationToken cancellationToken)
+		public async Task<MessageResponseDto> AddMessageAsync(Message message, string username, CancellationToken cancellationToken)
 		{
 			try
 			{
 				_context.Messages.Add(message);
 				await _context.SaveChangesAsync(cancellationToken);
+
 				return new MessageResponseDto
 				{
 					IsSuccess = true,
 					ChatRoomId = message.ChatRoomId,
 					SenderId = message.SenderId,
+					SenderUsername = username,
 					Content = message.Content,
 					SentAt = message.SentAt
 				};
@@ -130,6 +147,48 @@ namespace ChatAPI.Data.Repositories
 			catch (Exception ex)
 			{
 				return new MessageResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = ex.Message
+				};
+			}
+		}
+
+		public async Task<AdminDashboardResponseDto> CountAllMessagesAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				var totalMessages = await _context.Messages.CountAsync(cancellationToken);
+				return new AdminDashboardResponseDto
+				{
+					IsSuccess = true,
+					TotalMessages = totalMessages
+				};
+			}
+			catch (Exception ex)
+			{
+				return new AdminDashboardResponseDto
+				{
+					IsSuccess = false,
+					ErrorMessage = ex.Message
+				};
+			}
+		}
+
+		public async Task<AdminDashboardResponseDto> CountAllChatRoomsAsync(CancellationToken cancellationToken)
+		{
+			try
+			{
+				var totalChatRooms = await _context.ChatRooms.CountAsync(cancellationToken);
+				return new AdminDashboardResponseDto
+				{
+					IsSuccess = true,
+					TotalGroups = totalChatRooms
+				};
+			}
+			catch (Exception ex)
+			{
+				return new AdminDashboardResponseDto
 				{
 					IsSuccess = false,
 					ErrorMessage = ex.Message

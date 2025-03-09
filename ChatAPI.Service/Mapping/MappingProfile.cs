@@ -18,6 +18,14 @@ namespace ChatAPI.Service.Mapping
 														: string.Empty
 							)
 				);
+
+			CreateMap<User, UserProfileDto>()
+				.ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()));
+
+			CreateMap<UpdateUserDto, User>()
+				.ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
+				.ForMember(dest => dest.Role, opt => opt.Ignore())
+				.ForMember(dest => dest.Email, opt => opt.Ignore());
 		}
 	}
 }
